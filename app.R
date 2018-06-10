@@ -191,6 +191,22 @@ UpdateInputs <- function(data, session) {
   updateSliderInput(session, "score2", value = as.integer(data["score2"]))
 }
 
+# scoring functions
+topScoringTeam <- function() {
+  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
+  res = dbGetQuery(con, "SELECT team1 as Team, sum(score1) as MostGoals FROM (
+                            SELECT m1.team1, m1.team2, m1.score1, m1.score2 
+                              FROM match m1 
+                            UNION select m2.team2, m2.team1, m2.score2, m2.score1 
+                              FROM match m2
+                         ) AS foo 
+                         GROUP BY team1 
+                         ORDER BY sum(score1) DESC 
+                         LIMIT 1")
+  dbDisconnect(con)
+  return(res)
+}
+
 
 ui <- fluidPage(
   #use shiny js to disable the ID field
