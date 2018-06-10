@@ -1,5 +1,21 @@
 library(shiny)
 library(shinyjs)
+library(DBI)
+
+# load database
+LoadDb <- function() {
+  # for the time being create an in-memory db
+  # and load with empty df
+  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
+  df <- data.frame(id=integer(0), 
+                   team1=integer(0), 
+                   team2=integer(0), 
+                   score1=integer(0), 
+                   score2=integer(0))
+  dbWriteTable(con, "match", df, overwrite=TRUE)
+  dbDisconnect(con)
+
+}
 
 
 
@@ -8,10 +24,10 @@ library(shinyjs)
 # and create inputs generically
 GetTableMetadata <- function() {
   fields <- c(id = "Id", 
-              name = "Name", 
-              used_shiny = "Used Shiny", 
-              r_num_years = "R Years",
-              score1 = "Score")
+              team1 = "Home Team", 
+              team2 = "Away Team", 
+              score1 = "Home Score",
+              score2 = "Away Score")
   
   result <- list(fields = fields)
   return (result)
@@ -19,58 +35,107 @@ GetTableMetadata <- function() {
 
 # Find the next ID of a new record
 # (in mysql, this could be done by an incremental index)
+# GetNextId <- function() {
+#   if (exists("responses") && nrow(responses) > 0) {
+#     max(as.integer(rownames(responses))) + 1
+#   } else {
+#     return (1)
+#   }
+# }
 GetNextId <- function() {
-  if (exists("responses") && nrow(responses) > 0) {
-    max(as.integer(rownames(responses))) + 1
+  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
+  maxid = unname(dbGetQuery(con, "SELECT max(id) from match"))
+  dbDisconnect(con)
+  if (is.na(maxid)) {
+    return(1)
   } else {
-    return (1)
+    return(unlist(maxid) + 1)
   }
 }
 
 #C
+# CreateData <- function(data) {
+#   
+#   data <- CastData(data)
+#   rownames(data) <- GetNextId()
+#   if (exists("responses")) {
+#     responses <<- rbind(responses, data)
+#   } else {
+#     responses <<- data
+#   }
+# }
 CreateData <- function(data) {
-  
+  print(data)
   data <- CastData(data)
-  rownames(data) <- GetNextId()
-  if (exists("responses")) {
-    responses <<- rbind(responses, data)
-  } else {
-    responses <<- data
-  }
+  #print(data)
+  data["id"] <- GetNextId()
+
+  print("here2")
+  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
+  dbWriteTable(con, "match", data, append=TRUE)
+  dbDisconnect(con)
 }
 
 #R
+# ReadData <- function() {
+#   if (exists("responses")) {
+#     responses
+#   }
+# }
 ReadData <- function() {
-  if (exists("responses")) {
-    responses
+  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
+  if (length(dbListTables(con)) == 0) {
+    dbDisconnect(con)
+    LoadDb()
+  } else {
+    res = dbReadTable(con, 'match')
+    dbDisconnect(con)
+    if (nrow(res)) {
+      return(res)
+    }
   }
 }
 
 
-
 #U
+# UpdateData <- function(data) {
+#   data <- CastData(data)
+#   responses[row.names(responses) == row.names(data), ] <<- data
+# }
 UpdateData <- function(data) {
   data <- CastData(data)
-  responses[row.names(responses) == row.names(data), ] <<- data
+  dbBegin(con)
+  rows = dbExecute(con,sprintf("DELETE FROM match where id = %s",unname(data["id"])))
+  if (rows == 1) {
+    dbWriteTable(con, "match", data, append=TRUE)
+    dbCommit(con)
+  } else {
+    dbRollback(con)
+  }
 }
 
 #D
+# DeleteData <- function(data) {
+#   responses <<- responses[row.names(responses) != unname(data["id"]), ]
+# }
 DeleteData <- function(data) {
-  responses <<- responses[row.names(responses) != unname(data["id"]), ]
+  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
+  dbExecute(con, sprintf("DELETE FROM match WHERE id = %s", unname(data["id"])))
+  dbDisconnect(con)
 }
-
 
 
 
 # Cast from Inputs to a one-row data.frame
 CastData <- function(data) {
-  datar <- data.frame(name = data["name"], 
-                      used_shiny = as.logical(data["used_shiny"]), 
-                      r_num_years = as.integer(data["r_num_years"]),
+  datar <- data.frame(id = as.integer(data["id"]),
+                      team1 = as.integer(data["team1"]), 
+                      team2 = as.integer(data["team2"]),
                       score1 = as.integer(data["score1"]),
+                      score2 = as.integer(data["score2"]),
                       stringsAsFactors = FALSE)
   
-  rownames(datar) <- data["id"]
+  #rownames(datar) <- data["id"]
   return (datar)
 }
 
@@ -79,17 +144,17 @@ CastData <- function(data) {
 
 # Return an empty, new record
 CreateDefaultRecord <- function() {
-  mydefault <- CastData(list(id = "0", name = "", used_shiny = FALSE, score1 = 0, r_num_years = 2))
+  mydefault <- CastData(list(id = 1, team1 = 1, team2 = 2, score1 = 0, score2 = 0))
   return (mydefault)
 }
 
 # Fill the input fields with the values of the selected record in the table
 UpdateInputs <- function(data, session) {
   updateTextInput(session, "id", value = unname(rownames(data)))
-  updateTextInput(session, "name", value = unname(data["name"]))
-  updateCheckboxInput(session, "used_shiny", value = as.logical(data["used_shiny"]))
-  updateSliderInput(session, "r_num_years", value = as.integer(data["r_num_years"]))
+  updateTextInput(session, "team1", value = unname(data["team1"]))
+  updateTextInput(session, "team2", value = unname(data["team2"]))
   updateSliderInput(session, "score1", value = as.integer(data["score1"]))
+  updateSliderInput(session, "score2", value = as.integer(data["score2"]))
 }
 
 
@@ -102,12 +167,12 @@ ui <- fluidPage(
   
   #input fields
   tags$hr(),
-  shinyjs::disabled(textInput("id", "Id", "0")),
-  textInput("name", "Name", ""),
-  checkboxInput("used_shiny", "Used Shiny", FALSE),
-  sliderInput("score1", "Score", 0, 10, 0, ticks = TRUE),
-  sliderInput("r_num_years", "R Years", 0, 25, 2, ticks = FALSE),
-  
+  shinyjs::disabled(textInput("id", "Id", "1")),
+  textInput("team1", "Home Team", ""),
+  textInput("team2", "Away Team", ""),
+  sliderInput("score1", "Home Score", 0, 10, 0, ticks = TRUE),
+  sliderInput("score2", "Away Score", 0, 10, 0, ticks = TRUE),
+
   #action buttons
   actionButton("submit", "Submit"),
   actionButton("new", "New"),
@@ -124,9 +189,12 @@ server <- function(input, output, session) {
   
   # Click "Submit" button -> save data
   observeEvent(input$submit, {
-    if (input$id != "0") {
+    if (input$id != "1") {
+      print("Here0")
       UpdateData(formData())
     } else {
+      LoadDb()
+      print("here1")
       CreateData(formData())
       UpdateInputs(CreateDefaultRecord(), session)
     }
