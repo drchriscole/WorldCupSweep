@@ -44,12 +44,17 @@ GetTableMetadata <- function() {
 # }
 GetNextId <- function() {
   con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
-  maxid = unname(dbGetQuery(con, "SELECT max(id) from match"))
-  dbDisconnect(con)
-  if (is.na(maxid)) {
+  if (length(dbListTables(con)) == 0) {
+    dbDisconnect(con)
     return(1)
   } else {
-    return(unlist(maxid) + 1)
+    maxid = unname(dbGetQuery(con, "SELECT max(id) from match"))
+    dbDisconnect(con)
+    if (is.na(maxid)) {
+      return(1)
+    } else {
+      return(unlist(maxid) + 1)
+    }
   }
 }
 
@@ -91,7 +96,7 @@ ReadData <- function() {
     res = dbReadTable(con, 'match')
     dbDisconnect(con)
     if (nrow(res)) {
-      return(res)
+      return(res[-1])
     }
   }
 }
@@ -193,7 +198,7 @@ server <- function(input, output, session) {
       print("Here0")
       UpdateData(formData())
     } else {
-      LoadDb()
+      #LoadDb()
       print("here1")
       CreateData(formData())
       UpdateInputs(CreateDefaultRecord(), session)
