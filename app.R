@@ -17,6 +17,14 @@ LoadDb <- function() {
 
 }
 
+teams = c("Argentina" = 1,
+          "Australia" = 2,
+          "Belgium" = 3,
+          "Brazil" = 4,
+          "Colombia" = 5,
+          "Costa Rica" = 6,
+          "Croatia" = 7,
+          "Denmark" = 8)
 
 # Get table metadata. For now, just the fields
 # Further development: also define field types
@@ -140,16 +148,13 @@ CastData <- function(data) {
                       score2 = as.integer(data["score2"]),
                       stringsAsFactors = FALSE)
   
-  #rownames(datar) <- data["id"]
+  rownames(datar) <- data["id"]
   return (datar)
 }
 
-
-
-
 # Return an empty, new record
 CreateDefaultRecord <- function() {
-  mydefault <- CastData(list(id = 1, team1 = 1, team2 = 2, score1 = 0, score2 = 0))
+  mydefault <- CastData(list(id = "0", team1 = "1", team2 = "2", score1 = 0, score2 = "0"))
   return (mydefault)
 }
 
@@ -172,9 +177,9 @@ ui <- fluidPage(
   
   #input fields
   tags$hr(),
-  shinyjs::disabled(textInput("id", "Id", "1")),
-  textInput("team1", "Home Team", ""),
-  textInput("team2", "Away Team", ""),
+  shinyjs::disabled(textInput("id", "Id", "0")),
+  selectInput("team1", "Home Team", teams),
+  selectInput("team2", "Away Team", teams, selected = 2),
   sliderInput("score1", "Home Score", 0, 10, 0, ticks = TRUE),
   sliderInput("score2", "Away Score", 0, 10, 0, ticks = TRUE),
 
@@ -194,7 +199,7 @@ server <- function(input, output, session) {
   
   # Click "Submit" button -> save data
   observeEvent(input$submit, {
-    if (input$id != "1") {
+    if (input$id != "0") {
       UpdateData(formData())
     } else {
       CreateData(formData())
@@ -232,9 +237,6 @@ server <- function(input, output, session) {
   }, server = FALSE, selection = "single",
   colnames = unname(GetTableMetadata()$fields)[-1]
   )     
-  
-  
-  
 }
 
 
