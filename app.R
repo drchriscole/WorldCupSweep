@@ -18,7 +18,6 @@ LoadDb <- function() {
 }
 
 
-
 # Get table metadata. For now, just the fields
 # Further development: also define field types
 # and create inputs generically
@@ -96,6 +95,7 @@ ReadData <- function() {
     res = dbReadTable(con, 'match')
     dbDisconnect(con)
     if (nrow(res)) {
+      rownames(res) <- unlist(res['id'])
       return(res[-1])
     }
   }
@@ -195,11 +195,8 @@ server <- function(input, output, session) {
   # Click "Submit" button -> save data
   observeEvent(input$submit, {
     if (input$id != "1") {
-      print("Here0")
       UpdateData(formData())
     } else {
-      #LoadDb()
-      print("here1")
       CreateData(formData())
       UpdateInputs(CreateDefaultRecord(), session)
     }
