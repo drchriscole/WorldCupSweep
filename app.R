@@ -202,7 +202,7 @@ topScoringTeam <- function() {
                          ) AS foo 
                          GROUP BY team1 
                          ORDER BY sum(score1) DESC 
-                         LIMIT 1")
+                         LIMIT 5")
   dbDisconnect(con)
   return(res)
 }
@@ -212,21 +212,27 @@ ui <- fluidPage(
   #use shiny js to disable the ID field
   shinyjs::useShinyjs(),
   
-  #data table
-  DT::dataTableOutput("responses", width = 300), 
-  
-  #input fields
-  tags$hr(),
-  shinyjs::disabled(textInput("id", "Id", "0")),
-  selectInput("team1", "Home Team", teams),
-  selectInput("team2", "Away Team", teams, selected = 2),
-  sliderInput("score1", "Home Score", 0, 10, 0, ticks = TRUE),
-  sliderInput("score2", "Away Score", 0, 10, 0, ticks = TRUE),
-
-  #action buttons
-  actionButton("submit", "Submit"),
-  actionButton("new", "New"),
-  actionButton("delete", "Delete")
+  fluidRow(
+    column(3,
+      #input fields
+      shinyjs::disabled(textInput("id", "Id", "0")),
+      selectInput("team1", "Home Team", teams),
+      selectInput("team2", "Away Team", teams, selected = 2),
+      sliderInput("score1", "Home Score", 0, 10, 0, ticks = TRUE),
+      sliderInput("score2", "Away Score", 0, 10, 0, ticks = TRUE),
+    
+      #action buttons
+      actionButton("submit", "Submit"),
+      actionButton("new", "New"),
+      actionButton("delete", "Delete")
+    ),
+    
+    column(7, offset = 1,
+      #data table
+      DT::dataTableOutput("responses")
+    )
+    
+  )
 )
 
 
