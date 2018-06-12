@@ -1,6 +1,7 @@
 library(shiny)
 library(shinyjs)
 library(DBI)
+library(ggplot2)
 
 # load database
 LoadDb <- function() {
@@ -141,6 +142,7 @@ ReadData <- function() {
 # }
 UpdateData <- function(data) {
   data <- CastData(data)
+  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
   dbBegin(con)
   rows = dbExecute(con,sprintf("DELETE FROM match where id = %s",unname(data["id"])))
   if (rows == 1) {
@@ -149,6 +151,7 @@ UpdateData <- function(data) {
   } else {
     dbRollback(con)
   }
+  dbDisconnect(con)
 }
 
 #D
@@ -232,6 +235,12 @@ ui <- fluidPage(
       DT::dataTableOutput("responses")
     )
     
+  ),
+  
+  fluidRow(
+    column(7, offset = 3,
+      plotOutput('plot')
+    )
   )
 )
 
@@ -271,6 +280,13 @@ server <- function(input, output, session) {
       UpdateInputs(data, session)
     }
     
+  })
+  
+  # display plot
+  output$plot <- renderPlot({
+    ts <- topScoringTeam()
+    ts$Team <- as.character(ts$Team)
+    ggplot(ts, aes(x=Team, y = MostGoals)) + geom_col()
   })
   
   # display table
