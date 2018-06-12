@@ -198,14 +198,30 @@ UpdateInputs <- function(data, session) {
 topScoringTeam <- function() {
   con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
   res = dbGetQuery(con, "SELECT team1 as Team, sum(score1) as MostGoals FROM (
-                            SELECT m1.team1, m1.team2, m1.score1, m1.score2 
-                              FROM match m1 
-                            UNION select m2.team2, m2.team1, m2.score2, m2.score1 
-                              FROM match m2
-                         ) AS foo 
-                         GROUP BY team1 
-                         ORDER BY sum(score1) DESC 
-                         LIMIT 5")
+                   SELECT m1.team1, m1.team2, m1.score1, m1.score2 
+                   FROM match m1 
+                   UNION select m2.team2, m2.team1, m2.score2, m2.score1 
+                   FROM match m2
+  ) AS foo 
+                   GROUP BY team1 
+                   ORDER BY sum(score1) DESC 
+                   LIMIT 5")
+  dbDisconnect(con)
+  return(res)
+}
+
+# scoring functions
+lowScoringTeam <- function() {
+  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
+  res = dbGetQuery(con, "SELECT team1 as Team, sum(score1) as LeastGoals FROM (
+                   SELECT m1.team1, m1.team2, m1.score1, m1.score2 
+                   FROM match m1 
+                   UNION select m2.team2, m2.team1, m2.score2, m2.score1 
+                   FROM match m2
+  ) AS foo 
+                   GROUP BY team1 
+                   ORDER BY sum(score1) ASC 
+                   LIMIT 5")
   dbDisconnect(con)
   return(res)
 }
@@ -238,7 +254,10 @@ ui <- fluidPage(
   ),
   
   fluidRow(
-    column(7, offset = 3,
+    column(3,
+      plotOutput('plot1')
+    ),
+    column(7,
       plotOutput('plot')
     )
   )
@@ -285,8 +304,15 @@ server <- function(input, output, session) {
   # display plot
   output$plot <- renderPlot({
     ts <- topScoringTeam()
-    ts$Team <- as.character(ts$Team)
+    ts$Team <- factor(ts$Team, levels=ts$Team)
     ggplot(ts, aes(x=Team, y = MostGoals)) + geom_col()
+  })
+  
+  # display plot
+  output$plot1 <- renderPlot({
+    ls <- lowScoringTeam()
+    ls$Team <- factor(ls$Team, levels=ls$Team)
+    ggplot(ls, aes(x=Team, y = LeastGoals)) + geom_col()
   })
   
   # display table
