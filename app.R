@@ -211,16 +211,16 @@ topScoringTeam <- function() {
 }
 
 # scoring functions
-lowScoringTeam <- function() {
+topConcedingTeam <- function() {
   con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
-  res = dbGetQuery(con, "SELECT team1 as Team, sum(score1) as LeastGoals FROM (
+  res = dbGetQuery(con, "SELECT team1 as Team, sum(score2) as MostGoals FROM (
                    SELECT m1.team1, m1.team2, m1.score1, m1.score2 
                    FROM match m1 
                    UNION select m2.team2, m2.team1, m2.score2, m2.score1 
                    FROM match m2
   ) AS foo 
                    GROUP BY team1 
-                   ORDER BY sum(score1) ASC 
+                   ORDER BY sum(score2) DESC 
                    LIMIT 5")
   dbDisconnect(con)
   return(res)
@@ -253,11 +253,13 @@ ui <- fluidPage(
     
   ),
   
+  hr(),
+  
   fluidRow(
-    column(3,
+    column(5,
       plotOutput('plot1')
     ),
-    column(7,
+    column(5,
       plotOutput('plot')
     )
   )
@@ -305,14 +307,19 @@ server <- function(input, output, session) {
   output$plot <- renderPlot({
     ts <- topScoringTeam()
     ts$Team <- factor(ts$Team, levels=ts$Team)
-    ggplot(ts, aes(x=Team, y = MostGoals)) + geom_col()
+    ggplot(ts, aes(x=Team, y = MostGoals)) + 
+      geom_col() +
+      ggtitle("Most Goals Scored")
   })
   
   # display plot
   output$plot1 <- renderPlot({
-    ls <- lowScoringTeam()
-    ls$Team <- factor(ls$Team, levels=ls$Team)
-    ggplot(ls, aes(x=Team, y = LeastGoals)) + geom_col()
+    tc <- topConcedingTeam()
+    tc$Team <- factor(tc$Team, levels=tc$Team)
+    tc$MostGoals <- tc$MostGoals * -1
+    ggplot(tc, aes(x=Team, y = MostGoals)) + 
+      geom_col() +
+      ggtitle("Most Goals Conceded")
   })
   
   # display table
