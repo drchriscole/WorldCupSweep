@@ -70,14 +70,6 @@ GetTableMetadata <- function() {
 }
 
 # Find the next ID of a new record
-# (in mysql, this could be done by an incremental index)
-# GetNextId <- function() {
-#   if (exists("responses") && nrow(responses) > 0) {
-#     max(as.integer(rownames(responses))) + 1
-#   } else {
-#     return (1)
-#   }
-# }
 GetNextId <- function() {
   con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
   if (length(dbListTables(con)) == 0) {
@@ -94,17 +86,7 @@ GetNextId <- function() {
   }
 }
 
-#C
-# CreateData <- function(data) {
-#   
-#   data <- CastData(data)
-#   rownames(data) <- GetNextId()
-#   if (exists("responses")) {
-#     responses <<- rbind(responses, data)
-#   } else {
-#     responses <<- data
-#   }
-# }
+#C - create
 CreateData <- function(data) {
   print(data)
   data <- CastData(data)
@@ -117,12 +99,7 @@ CreateData <- function(data) {
   dbDisconnect(con)
 }
 
-#R
-# ReadData <- function() {
-#   if (exists("responses")) {
-#     responses
-#   }
-# }
+#R - read
 ReadData <- function() {
   con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
   if (length(dbListTables(con)) == 0) {
@@ -139,29 +116,25 @@ ReadData <- function() {
 }
 
 
-#U
-# UpdateData <- function(data) {
-#   data <- CastData(data)
-#   responses[row.names(responses) == row.names(data), ] <<- data
-# }
+#U - update
 UpdateData <- function(data) {
   data <- CastData(data)
   con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
   dbBegin(con)
+  # first delete the entry to update
   rows = dbExecute(con,sprintf("DELETE FROM match where id = %s",unname(data["id"])))
   if (rows == 1) {
+    # then, write a new entry with the updated data
     dbWriteTable(con, "match", data, append=TRUE)
     dbCommit(con)
   } else {
+    # rollback if there's a problem
     dbRollback(con)
   }
   dbDisconnect(con)
 }
 
-#D
-# DeleteData <- function(data) {
-#   responses <<- responses[row.names(responses) != unname(data["id"]), ]
-# }
+#D - delete
 DeleteData <- function(data) {
   con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
   dbExecute(con, sprintf("DELETE FROM match WHERE id = %s", unname(data["id"])))
@@ -254,6 +227,7 @@ mostCards <- function() {
   return(res)
 }
 
+# Get the games played per team
 gamesPlayed <- function() {
   con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
   res = dbGetQuery(con, "select team1 as team, count(*) as games from (SELECT m1.team1, m1.team2 from match m1 union select m2.team2, m2.team1 from match m2) as foo group by team1")
@@ -261,11 +235,15 @@ gamesPlayed <- function() {
   return(res)
 }
 
+# Calculate the number of cards per game
 cardsPerGame <- function() {
   gp = gamesPlayed()
   mc = mostCards()
+  # merge games played with the cards collected
   df = data.frame(mc, Games = gp$games, cpg = mc$MostCards/gp$games)
+  # order by cards per game
   df = df[order(df$cpg, decreasing = TRUE),]
+  # keep top five
   df =  df[1:5,]
   df$Team <- factor(df$Team, levels=df$Team)
   return(df)
