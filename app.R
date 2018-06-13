@@ -240,6 +240,36 @@ topConcedingTeam <- function() {
   return(res)
 }
 
+# find teams with most cards
+mostCards <- function() {
+  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
+  res = dbGetQuery(con, "SELECT team1 as Team, sum(cards1) as MostCards FROM (
+                   SELECT m1.team1, m1.team2, m1.cards1, m1.cards2 
+                   FROM match m1 
+                   UNION select m2.team2, m2.team1, m2.cards2, m2.cards1 
+                   FROM match m2
+  ) AS foo 
+                   GROUP BY team1")
+  dbDisconnect(con)
+  return(res)
+}
+
+gamesPlayed <- function() {
+  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
+  res = dbGetQuery(con, "select team1 as team, count(*) as games from (SELECT m1.team1, m1.team2 from match m1 union select m2.team2, m2.team1 from match m2) as foo group by team1")
+  dbDisconnect(con)
+  return(res)
+}
+
+cardsPerGame <- function() {
+  gp = gamesPlayed()
+  mc = mostCards()
+  df = data.frame(mc, Games = gp$games, cpg = mc$MostCards/gp$games)
+  df = df[order(df$cpg, decreasing = TRUE),]
+  df =  df[1:5,]
+  df$Team <- factor(df$Team, levels=df$Team)
+  return(df)
+}
 
 ui <- fluidPage(
   #use shiny js to disable the ID field
@@ -276,7 +306,7 @@ ui <- fluidPage(
       plotOutput('plot1')
     ),
     column(5,
-      plotOutput('plot')
+      plotOutput('plot2')
     )
   )
 )
@@ -336,6 +366,15 @@ server <- function(input, output, session) {
     ggplot(tc, aes(x=Team, y = MostGoals)) + 
       geom_col() +
       ggtitle("Most Goals Conceded")
+  })
+  
+  # display plot
+  output$plot2 <- renderPlot({
+    df = cardsPerGame()
+    ggplot(df, aes(x=Team, y = cpg)) + 
+      geom_col() +
+      ylab("CardsPerGame") +
+      ggtitle("Most Cards/Game")
   })
   
   # display table
