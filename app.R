@@ -12,7 +12,9 @@ LoadDb <- function() {
                    team1=integer(0), 
                    team2=integer(0), 
                    score1=integer(0), 
-                   score2=integer(0))
+                   score2=integer(0),
+                   cards1=integer(0),
+                   cards2=integer(0))
   dbWriteTable(con, "match", df, overwrite=TRUE)
   dbDisconnect(con)
 
@@ -59,7 +61,9 @@ GetTableMetadata <- function() {
               team1 = "Home Team", 
               team2 = "Away Team", 
               score1 = "Home Score",
-              score2 = "Away Score")
+              score2 = "Away Score",
+              cards1 = "Home Cards",
+              cards2 = "Away Cards")
   
   result <- list(fields = fields)
   return (result)
@@ -173,6 +177,8 @@ CastData <- function(data) {
                       team2 = as.integer(data["team2"]),
                       score1 = as.integer(data["score1"]),
                       score2 = as.integer(data["score2"]),
+                      cards1 = as.integer(data["cards1"]),
+                      cards2 = as.integer(data["cards2"]),
                       stringsAsFactors = FALSE)
   
   rownames(datar) <- data["id"]
@@ -181,7 +187,13 @@ CastData <- function(data) {
 
 # Return an empty, new record
 CreateDefaultRecord <- function() {
-  mydefault <- CastData(list(id = "0", team1 = "1", team2 = "2", score1 = 0, score2 = "0"))
+  mydefault <- CastData(list(id = "0", 
+                             team1 = "1", 
+                             team2 = "2", 
+                             score1 = "0", 
+                             score2 = "0",
+                             cards1 = "0",
+                             cards2 = "0"))
   return (mydefault)
 }
 
@@ -192,6 +204,8 @@ UpdateInputs <- function(data, session) {
   updateTextInput(session, "team2", value = unname(data["team2"]))
   updateSliderInput(session, "score1", value = as.integer(data["score1"]))
   updateSliderInput(session, "score2", value = as.integer(data["score2"]))
+  updateSliderInput(session, "cards1", value = as.integer(data["cards1"]))
+  updateSliderInput(session, "cards2", value = as.integer(data["cards2"]))
 }
 
 # scoring functions
@@ -239,7 +253,9 @@ ui <- fluidPage(
       selectInput("team2", "Away Team", teams, selected = 2),
       sliderInput("score1", "Home Score", 0, 10, 0, ticks = TRUE),
       sliderInput("score2", "Away Score", 0, 10, 0, ticks = TRUE),
-    
+      sliderInput("cards1", "Home Cards", 0, 10, 0, ticks = TRUE),
+      sliderInput("cards2", "Away Cards", 0, 10, 0, ticks = TRUE),
+      
       #action buttons
       actionButton("submit", "Submit"),
       actionButton("new", "New"),
