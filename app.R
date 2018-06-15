@@ -1,7 +1,14 @@
+##
+## Shiny app for updating and monitoring a World Cup sweepstake
+##
+
 library(shiny)
 library(shinyjs)
 library(DBI)
 library(ggplot2)
+
+# much of this code is from this blog:
+# https://ipub.com/shiny-crud-app/
 
 # load database
 LoadDb <- function() {
@@ -329,6 +336,10 @@ server <- function(input, output, session) {
   
   # display plot
   output$plot <- renderPlot({
+    #update after submit is clicked
+    input$submit
+    #update after delete is clicked
+    input$delete
     ts <- topScoringTeam()
     ts$Team <- factor(ts$Team, levels=ts$Team)
     ggplot(ts, aes(x=Team, y = MostGoals)) + 
@@ -338,6 +349,10 @@ server <- function(input, output, session) {
   
   # display plot
   output$plot1 <- renderPlot({
+    #update after submit is clicked
+    input$submit
+    #update after delete is clicked
+    input$delete
     tc <- topConcedingTeam()
     tc$Team <- factor(tc$Team, levels=tc$Team)
     tc$MostGoals <- tc$MostGoals * -1
@@ -348,6 +363,10 @@ server <- function(input, output, session) {
   
   # display plot
   output$plot2 <- renderPlot({
+    #update after submit is clicked
+    input$submit
+    #update after delete is clicked
+    input$delete
     df = cardsPerGame()
     ggplot(df, aes(x=Team, y = cpg)) + 
       geom_col() +
