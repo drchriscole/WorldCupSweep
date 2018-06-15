@@ -277,21 +277,12 @@ ui <- fluidPage(
       actionButton("delete", "Delete")
     ),
     
-    column(7, offset = 1,
-      #data table
-      DT::dataTableOutput("responses")
-    )
-    
-  ),
-  
-  hr(),
-  
-  fluidRow(
-    column(5,
-      plotOutput('plot1')
-    ),
-    column(5,
-      plotOutput('plot2')
+    column(7,
+      tabsetPanel(type = "tabs",
+        tabPanel("Plots", plotOutput('plot'), plotOutput('plot1'), plotOutput('plot2') ),
+        tabPanel("Table", DT::dataTableOutput("responses"))
+        
+      )
     )
   )
 )
