@@ -198,8 +198,7 @@ topScoringTeam <- function() {
                    FROM match m2
   ) AS foo 
                    GROUP BY team1 
-                   ORDER BY sum(score1) DESC 
-                   LIMIT 5")
+                   ")
   dbDisconnect(con)
   return(res)
 }
@@ -214,8 +213,7 @@ topConcedingTeam <- function() {
                    FROM match m2
   ) AS foo 
                    GROUP BY team1 
-                   ORDER BY sum(score2) DESC 
-                   LIMIT 5")
+                   ")
   dbDisconnect(con)
   return(res)
 }
