@@ -275,7 +275,7 @@ ui <- fluidPage(
       actionButton("delete", "Delete")
     ),
     
-    column(7,
+    column(8,
       tabsetPanel(type = "tabs",
         tabPanel("Plots", plotOutput('plot'), plotOutput('plot1'), plotOutput('plot2') ),
         tabPanel("Table", DT::dataTableOutput("responses"))
@@ -331,24 +331,33 @@ server <- function(input, output, session) {
     input$delete
     ts <- topScoringTeam()
     ts$Team <- factor(ts$Team, levels=ts$Team)
-    ggplot(ts, aes(x=Team, y = MostGoals)) + 
-      geom_col() +
-      ggtitle("Most Goals Scored")
-  })
-  
-  # display plot
-  output$plot1 <- renderPlot({
-    #update after submit is clicked
-    input$submit
-    #update after delete is clicked
-    input$delete
     tc <- topConcedingTeam()
     tc$Team <- factor(tc$Team, levels=tc$Team)
     tc$MostGoals <- tc$MostGoals * -1
-    ggplot(tc, aes(x=Team, y = MostGoals)) + 
-      geom_col() +
-      ggtitle("Most Goals Conceded")
+    par(mfrow=c(2,1))
+    par(mai=c(1,0.8,0,0))
+    par(mgp=c(1.5,0.5,-0.5))
+    par(mar=c(0,3,3,0))
+    barplot(ts$MostGoals, col="darkgreen", ylab='Scored', las=1, tck=-0.02, cex.names = 0.5, cex.axis = 0.8)
+    par(mai=c(1,0.8,0,0))
+    par(mar=c(5,3,0,0))
+    barplot(tc$MostGoals, names.arg = tc$Team, col="red", ylab='Conceeded', las=1, tck=-0.02, cex.names = 0.65, cex.axis = 0.8)
+
   })
+  
+  # display plot
+  # output$plot1 <- renderPlot({
+  #   #update after submit is clicked
+  #   input$submit
+  #   #update after delete is clicked
+  #   input$delete
+  #   tc <- topConcedingTeam()
+  #   tc$Team <- factor(tc$Team, levels=tc$Team)
+  #   tc$MostGoals <- tc$MostGoals * -1
+  #   ggplot(tc, aes(x=Team, y = MostGoals)) + 
+  #     geom_col() +
+  #     ggtitle("Most Goals Conceded")
+  # })
   
   # display plot
   output$plot2 <- renderPlot({
