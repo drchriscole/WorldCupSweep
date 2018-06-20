@@ -249,7 +249,7 @@ cardsPerGame <- function() {
   # order by cards per game
   df = df[order(df$cpg, decreasing = TRUE),]
   # keep top five
-  df =  df[1:5,]
+  df =  df[1:6,]
   df$Team <- factor(df$Team, levels=df$Team)
   return(df)
 }
@@ -277,7 +277,7 @@ ui <- fluidPage(
     
     column(8,
       tabsetPanel(type = "tabs",
-        tabPanel("Plots", plotOutput('plot'), plotOutput('plot1'), plotOutput('plot2') ),
+        tabPanel("Plots", plotOutput('scoresPlot'), plotOutput('cardsPlot') ),
         tabPanel("Table", DT::dataTableOutput("responses"))
         
       )
@@ -324,7 +324,7 @@ server <- function(input, output, session) {
   })
   
   # display plot
-  output$plot <- renderPlot({
+  output$scoresPlot <- renderPlot({
     #update after submit is clicked
     input$submit
     #update after delete is clicked
@@ -336,7 +336,7 @@ server <- function(input, output, session) {
     tc$MostGoals <- tc$MostGoals * -1
     par(mfrow=c(2,1))
     par(mai=c(1,0.8,0,0))
-    par(mgp=c(1.5,0.5,-0.5))
+    par(mgp=c(1.5,0.5,0.5))
     par(mar=c(0,3,3,0))
     barplot(ts$MostGoals, col="darkgreen", ylab='Scored', las=1, tck=-0.02, cex.names = 0.5, cex.axis = 0.8)
     par(mai=c(1,0.8,0,0))
@@ -346,30 +346,19 @@ server <- function(input, output, session) {
   })
   
   # display plot
-  # output$plot1 <- renderPlot({
-  #   #update after submit is clicked
-  #   input$submit
-  #   #update after delete is clicked
-  #   input$delete
-  #   tc <- topConcedingTeam()
-  #   tc$Team <- factor(tc$Team, levels=tc$Team)
-  #   tc$MostGoals <- tc$MostGoals * -1
-  #   ggplot(tc, aes(x=Team, y = MostGoals)) + 
-  #     geom_col() +
-  #     ggtitle("Most Goals Conceded")
-  # })
-  
-  # display plot
-  output$plot2 <- renderPlot({
+  output$cardsPlot <- renderPlot({
     #update after submit is clicked
     input$submit
     #update after delete is clicked
     input$delete
     df = cardsPerGame()
     ggplot(df, aes(x=Team, y = cpg)) + 
-      geom_col() +
+      geom_col(colour='black', fill='yellow') +
+      xlab("") +
       ylab("CardsPerGame") +
-      ggtitle("Most Cards/Game")
+      ggtitle("Most Cards/Game") +
+      theme_bw() +
+      theme(axis.text = element_text(size=14), axis.title = element_text(size=15), title = element_text(size=15, face='bold'))
   })
   
   # display table
