@@ -368,8 +368,12 @@ server <- function(input, output, session) {
     #update after delete is clicked
     input$delete
     ReadData()
-  }, server = FALSE, selection = "single",
-  colnames = unname(GetTableMetadata()$fields)[-1]
+  }, server = FALSE, 
+  selection = "single",
+  colnames = unname(GetTableMetadata()$fields)[-1],
+  options = list(
+    pageLength = 25
+  )
   )     
 }
 
