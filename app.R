@@ -333,15 +333,30 @@ server <- function(input, output, session) {
     ts$Team <- factor(ts$Team, levels=ts$Team)
     tc <- topConcedingTeam()
     tc$Team <- factor(tc$Team, levels=tc$Team)
+    maxScore = max(tc$MostGoals, ts$MostGoals)
     tc$MostGoals <- tc$MostGoals * -1
     par(mfrow=c(2,1))
     par(mai=c(1,0.8,0,0))
     par(mgp=c(1.5,0.5,0.5))
     par(mar=c(0,3,3,0))
-    barplot(ts$MostGoals, col="darkgreen", ylab='Scored', las=1, tck=-0.02, cex.names = 0.5, cex.axis = 0.8)
+    # need to plot twice in order to have lines below bars
+    barplot(rep(NA, length(ts$MostGoals)), ylim=c(0,maxScore), axes = FALSE)
+    abline(h=seq(0,maxScore,2), col='lightgray')
+    barplot(ts$MostGoals, col="darkgreen", ylab='Scored', las=1, tck=-0.02, cex.names = 0.5, cex.axis = 0.8, ylim=c(0,maxScore), add = TRUE)
     par(mai=c(1,0.8,0,0))
     par(mar=c(5,3,0,0))
-    barplot(tc$MostGoals, names.arg = tc$Team, col="red", ylab='Conceeded', las=1, tck=-0.02, cex.names = 0.65, cex.axis = 0.8)
+    barplot(rep(NA, length(tc$MostGoals)), ylim=c(-maxScore,0), axes = FALSE)
+    abline(h=seq(-maxScore,0,2), col='lightgray')
+    barplot(tc$MostGoals, 
+            names.arg = tc$Team, 
+            col="red", 
+            ylab='Conceeded', 
+            las=1, 
+            tck=-0.02, 
+            cex.names = 0.65, 
+            cex.axis = 0.8,
+            add = TRUE)
+
 
   })
   
