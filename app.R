@@ -95,12 +95,9 @@ GetNextId <- function() {
 
 #C - create
 CreateData <- function(data) {
-  print(data)
   data <- CastData(data)
-  #print(data)
   data["id"] <- GetNextId()
 
-  print("here2")
   con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
   dbWriteTable(con, "match", data, append=TRUE)
   dbDisconnect(con)
