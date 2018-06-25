@@ -331,6 +331,9 @@ server <- function(input, output, session) {
     tc <- topConcedingTeam()
     tc$Team <- factor(tc$Team, levels=tc$Team)
     maxScore = max(tc$MostGoals, ts$MostGoals)
+    if (maxScore %% 2 == 1) {
+      maxScore = maxScore -1
+    }
     tc$MostGoals <- tc$MostGoals * -1
     par(mfrow=c(2,1))
     par(mai=c(1,0.8,0,0))
