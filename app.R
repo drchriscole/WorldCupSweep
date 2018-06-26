@@ -255,6 +255,8 @@ ui <- fluidPage(
   #use shiny js to disable the ID field
   shinyjs::useShinyjs(),
   
+  titlePanel("LRCFS World Cup Sweepstake"),
+  
   fluidRow(
     column(3,
       #input fields
@@ -274,7 +276,7 @@ ui <- fluidPage(
     
     column(8,
       tabsetPanel(type = "tabs",
-        tabPanel("Plots", plotOutput('scoresPlot'), plotOutput('cardsPlot') ),
+        tabPanel("Plots", plotOutput('scoresPlot', click = "plot_click"), plotOutput('cardsPlot') ),
         tabPanel("Table", DT::dataTableOutput("responses"))
         
       )
@@ -335,6 +337,12 @@ server <- function(input, output, session) {
       maxScore = maxScore -1
     }
     tc$MostGoals <- tc$MostGoals * -1
+    
+    if (!is.null(input$plot_click)) {
+      tc = tc[order(ts$MostGoals, decreasing = TRUE),]
+      ts = ts[order(ts$MostGoals, decreasing = TRUE),]
+    }
+    
     par(mfrow=c(2,1))
     par(mai=c(1,0.8,0,0))
     par(mgp=c(1.5,0.5,0.5))
