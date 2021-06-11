@@ -5,7 +5,7 @@ getCon <- function() {
 }
 
 # load database
-LoadDb <- function() {
+LoadDb <- function(con) {
   # for the time being create an in-memory db
   # and load with empty df
   con <- getCon()
@@ -17,64 +17,9 @@ LoadDb <- function() {
                    cards1=integer(0),
                    cards2=integer(0))
   dbWriteTable(con, "match", df, overwrite=TRUE)
-  dbDisconnect(con)
-  
+
 }
 
-teams = c("Argentina" = "ARG",
-          "Australia" = "AUS",
-          "Austia" = "OST",
-          "Belgium" = "BEL",
-          "Brazil" = "BRA",
-          "Cameroon" = "CAM",
-          "Canada" = "CAN",
-          "Chile" = "CHL",
-          "China" = "CHN",
-          "Colombia" = "COL",
-          "Costa Rica" = "CRC",
-          "Croatia" = "CRO",
-          "Czech Republic" = "CZE",
-          "Denmark" = "DEN",
-          "Egypt" = "EGY",
-          "England" = "ENG",
-          "Finland" = "FIN",
-          "France" = "FRA",
-          "Germany" = "GER",
-          "Hungary" = "MGY",
-          "Iceland" = "ISL",
-          "Iran" = "IRN",
-          "Italy" = "ITA",
-          "Jamaica" = "JAM",
-          "Japan" = "JPN",
-          "Mexico" = "MEX",
-          "Morocco" = "MAR",
-          "Netherlands" = "NED",
-          "New Zealand" = "NZL",
-          "Nigeria" = "NGA",
-          "North Macedonia", "NMA",
-          "Norway" = "NOR",
-          "Panama" = "PAN",
-          "Peru" = "PER",
-          "Poland" = "POL",
-          "Portugal" = "POR",
-          "Russia" = "RUS",
-          "Saudi Arabia" = "KSA",
-          "Scotland" = "SCO",
-          "Senegal" = "SEN",
-          "Serbia" = "SRB",
-          "Slovakia" = "SLO",
-          "South Africa" = "SAF",
-          "South Korea" = "KOR",
-          "Spain" = "ESP",
-          "Sweden" = "SWE",
-          "Switzerland" = "SUI",
-          "Thailand" = "TAI",
-          "Tunisia" = "TUN",
-          "Turkey" = "TUR",
-          "Ukraine" = "UKR",
-          "Uruguay" = "URU",
-          "USA" = "USA",
-          "Wales" = "WAL")
 
 # Get table metadata. For now, just the fields
 # Further development: also define field types
@@ -95,11 +40,9 @@ GetTableMetadata <- function() {
 # Find the next ID of a new record
 GetNextId <- function(con) {
   if (length(dbListTables(con)) == 0) {
-    dbDisconnect(con)
     return(1)
   } else {
     maxid = unname(dbGetQuery(con, "SELECT max(id) from match"))
-    dbDisconnect(con)
     if (is.na(maxid)) {
       return(1)
     } else {
@@ -119,11 +62,9 @@ CreateData <- function(data, con) {
 #R - read
 ReadData <- function(con) {
   if (length(dbListTables(con)) == 0) {
-    dbDisconnect(con)
-    LoadDb()
+    LoadDb(con)
   } else {
     res = dbReadTable(con, 'match')
-    dbDisconnect(con)
     if (nrow(res)) {
       rownames(res) <- unlist(res['id'])
       return(res[-1])
