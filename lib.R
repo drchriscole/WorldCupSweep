@@ -1,11 +1,10 @@
-# make connections
 getCon <- function() {
   con <- dbConnect(RSQLite::SQLite(), "Euros2020_sqlite.db")
   return(con)
 }
 
 # load database
-LoadDb <- function(con) {
+LoadDb <- function() {
   # for the time being create an in-memory db
   # and load with empty df
   con <- getCon()
@@ -17,9 +16,42 @@ LoadDb <- function(con) {
                    cards1=integer(0),
                    cards2=integer(0))
   dbWriteTable(con, "match", df, overwrite=TRUE)
-
+  dbDisconnect(con)
+  
 }
 
+teams = c("Argentina" = "ARG",
+          "Australia" = "AUS",
+          "Belgium" = "BEL",
+          "Brazil" = "BRA",
+          "Colombia" = "COL",
+          "Costa Rica" = "CRC",
+          "Croatia" = "CRO",
+          "Denmark" = "DEN",
+          "Egypt" = "EGY",
+          "England" = "ENG",
+          "France" = "FRA",
+          "Germany" = "GER",
+          "Iceland" = "ISL",
+          "Iran" = "IRN",
+          "Japan" = "JPN",
+          "Mexico" = "MEX",
+          "Morocco" = "MAR",
+          "Nigeria" = "NGA",
+          "Panama" = "PAN",
+          "Peru" = "PER",
+          "Poland" = "POL",
+          "Portugal" = "POR",
+          "Russia" = "RUS",
+          "Saudi Arabia" = "KSA",
+          "Senegal" = "SEN",
+          "Serbia" = "SRB",
+          "South Korea" = "KOR",
+          "Spain" = "ESP",
+          "Sweden" = "SWE",
+          "Switzerland" = "SUI",
+          "Tunisia" = "TUN",
+          "Uruguay" = "URU")
 
 # Get table metadata. For now, just the fields
 # Further development: also define field types
@@ -38,11 +70,14 @@ GetTableMetadata <- function() {
 }
 
 # Find the next ID of a new record
-GetNextId <- function(con) {
+GetNextId <- function() {
+  con <- getCon()
   if (length(dbListTables(con)) == 0) {
+    dbDisconnect(con)
     return(1)
   } else {
     maxid = unname(dbGetQuery(con, "SELECT max(id) from match"))
+    dbDisconnect(con)
     if (is.na(maxid)) {
       return(1)
     } else {
@@ -52,19 +87,24 @@ GetNextId <- function(con) {
 }
 
 #C - create
-CreateData <- function(data, con) {
+CreateData <- function(data) {
   data <- CastData(data)
   data["id"] <- GetNextId()
   
+  con <- getCon()
   dbWriteTable(con, "match", data, append=TRUE)
+  dbDisconnect(con)
 }
 
 #R - read
-ReadData <- function(con) {
+ReadData <- function() {
+  con <- getCon()
   if (length(dbListTables(con)) == 0) {
-    LoadDb(con)
+    dbDisconnect(con)
+    LoadDb()
   } else {
     res = dbReadTable(con, 'match')
+    dbDisconnect(con)
     if (nrow(res)) {
       rownames(res) <- unlist(res['id'])
       return(res[-1])
@@ -74,8 +114,9 @@ ReadData <- function(con) {
 
 
 #U - update
-UpdateData <- function(data, con) {
+UpdateData <- function(data) {
   data <- CastData(data)
+  con <- getCon()
   dbBegin(con)
   # first delete the entry to update
   rows = dbExecute(con,sprintf("DELETE FROM match where id = %s",unname(data["id"])))
@@ -87,11 +128,14 @@ UpdateData <- function(data, con) {
     # rollback if there's a problem
     dbRollback(con)
   }
+  dbDisconnect(con)
 }
 
 #D - delete
-DeleteData <- function(data, con) {
+DeleteData <- function(data) {
+  con <- getCon()
   dbExecute(con, sprintf("DELETE FROM match WHERE id = %s", unname(data["id"])))
+  dbDisconnect(con)
 }
 
 
@@ -135,7 +179,8 @@ UpdateInputs <- function(data, session) {
 }
 
 # scoring functions
-topScoringTeam <- function(con) {
+topScoringTeam <- function() {
+  con <- getCon()
   res = dbGetQuery(con, "SELECT team1 as Team, sum(score1) as MostGoals FROM (
                    SELECT m1.team1, m1.team2, m1.score1, m1.score2 
                    FROM match m1 
@@ -144,11 +189,13 @@ topScoringTeam <- function(con) {
   ) AS foo 
                    GROUP BY team1 
                    ")
+  dbDisconnect(con)
   return(res)
 }
 
 # scoring functions
-topConcedingTeam <- function(con) {
+topConcedingTeam <- function() {
+  con <- getCon()
   res = dbGetQuery(con, "SELECT team1 as Team, sum(score2) as MostGoals FROM (
                    SELECT m1.team1, m1.team2, m1.score1, m1.score2 
                    FROM match m1 
@@ -157,11 +204,13 @@ topConcedingTeam <- function(con) {
   ) AS foo 
                    GROUP BY team1 
                    ")
+  dbDisconnect(con)
   return(res)
 }
 
 # find teams with most cards
-mostCards <- function(con) {
+mostCards <- function() {
+  con <- getCon()
   res = dbGetQuery(con, "SELECT team1 as Team, sum(cards1) as MostCards FROM (
                    SELECT m1.team1, m1.team2, m1.cards1, m1.cards2 
                    FROM match m1 
@@ -169,12 +218,15 @@ mostCards <- function(con) {
                    FROM match m2
   ) AS foo 
                    GROUP BY team1")
+  dbDisconnect(con)
   return(res)
 }
 
 # Get the games played per team
-gamesPlayed <- function(con) {
+gamesPlayed <- function() {
+  con <- getCon()
   res = dbGetQuery(con, "select team1 as team, count(*) as games from (SELECT m1.team1, m1.team2 from match m1 union select m2.team2, m2.team1 from match m2) as foo group by team1")
+  dbDisconnect(con)
   return(res)
 }
 
