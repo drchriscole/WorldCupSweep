@@ -93,7 +93,7 @@ ui <- fluidPage(
     
     column(8,
       tabsetPanel(type = "tabs",
-        tabPanel("Plots", plotOutput('scoresPlot', click = "plot_click"), plotOutput('cardsPlot') ),
+        tabPanel("Plots", plotOutput('scoresPlot', dblclick = "plot_dbclick"), plotOutput('cardsPlot') ),
         tabPanel("Table", DT::dataTableOutput("responses"))
         
       )
@@ -139,6 +139,13 @@ server <- function(input, output, session) {
     
   })
   
+  # keep track of double-click event
+  plot_click <- reactiveValues(trigger = 0)
+  observe({
+    req(input$plot_dbclick)
+    isolate(plot_click$trigger <- plot_click$trigger + 1)
+  })
+  
   # display plot
   output$scoresPlot <- renderPlot({
     #update after submit is clicked
@@ -155,7 +162,7 @@ server <- function(input, output, session) {
     }
     tc$MostGoals <- tc$MostGoals * -1
     
-    if (!is.null(input$plot_click)) {
+    if (plot_click$trigger %% 2 == 0) {
       tc = tc[order(ts$MostGoals, decreasing = TRUE),]
       ts = ts[order(ts$MostGoals, decreasing = TRUE),]
     }
