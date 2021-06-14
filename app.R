@@ -167,27 +167,31 @@ server <- function(input, output, session) {
       ts = ts[order(ts$MostGoals, decreasing = TRUE),]
     }
     
+    # setting up a a pair of lined-up bar plots
+    # top plot
     par(mfrow=c(2,1))
     par(mai=c(1,0.8,0,0))
     par(mgp=c(1.5,0.5,0.5))
     par(mar=c(0,3,3,0))
     # need to plot twice in order to have lines below bars
     barplot(rep(NA, length(ts$MostGoals)), ylim=c(0,maxScore), axes = FALSE)
-    abline(h=seq(0,maxScore,2), col='lightgray')
-    barplot(ts$MostGoals, col="darkgreen", ylab='Scored', las=1, tck=-0.02, cex.names = 0.5, cex.axis = 0.8, ylim=c(0,maxScore), add = TRUE)
+    abline(h=seq(0,10,2), col='lightgray')
+    barplot(ts$MostGoals, col="darkgreen", add = TRUE, yaxt = 'n')
+    # ensure axis labels are integers
+    axis(2, at = 0:maxScore, las=1, tck=-0.02, cex.lab = 0.5, cex.axis = 0.8)
+    # bottom plot
     par(mai=c(1,0.8,0,0))
     par(mar=c(5,3,0,0))
     barplot(rep(NA, length(tc$MostGoals)), ylim=c(-maxScore,0), axes = FALSE)
-    abline(h=seq(-maxScore,0,2), col='lightgray')
+    abline(h=seq(-10,0,2), col='lightgray')
     barplot(tc$MostGoals, 
             names.arg = tc$Team, 
             col="red", 
             ylab='Conceeded', 
-            las=1, 
-            tck=-0.02, 
-            cex.names = 0.8, 
-            cex.axis = 0.8,
-            add = TRUE)
+            add = TRUE,
+            yaxt = 'n')
+    axis(2, at = 0:-maxScore, las=1, tck=-0.02, cex.names = 0.5, cex.axis = 0.8, )
+    
 
 
   })
