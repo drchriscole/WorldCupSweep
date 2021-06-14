@@ -14,7 +14,7 @@ source('lib.R')
 
 teams = c("Argentina" = "ARG",
           "Australia" = "AUS",
-          "Austia" = "OST",
+          "Austia" = "AUT",
           "Belgium" = "BEL",
           "Brazil" = "BRA",
           "Cameroon" = "CAM",
@@ -42,7 +42,7 @@ teams = c("Argentina" = "ARG",
           "Netherlands" = "NED",
           "New Zealand" = "NZL",
           "Nigeria" = "NGA",
-          "North Macedonia", "NMA",
+          "North Macedonia" = "MKD",
           "Norway" = "NOR",
           "Panama" = "PAN",
           "Peru" = "PER",
@@ -158,7 +158,7 @@ server <- function(input, output, session) {
     tc$Team <- factor(tc$Team, levels=tc$Team)
     maxScore = max(tc$MostGoals, ts$MostGoals)
     if (maxScore %% 2 == 1) {
-      maxScore = maxScore -1
+      #maxScore = maxScore -1
     }
     tc$MostGoals <- tc$MostGoals * -1
     
@@ -185,7 +185,7 @@ server <- function(input, output, session) {
             ylab='Conceeded', 
             las=1, 
             tck=-0.02, 
-            cex.names = 0.65, 
+            cex.names = 0.8, 
             cex.axis = 0.8,
             add = TRUE)
 
