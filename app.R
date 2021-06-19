@@ -6,6 +6,7 @@ library(shiny)
 library(shinyjs)
 library(DBI)
 library(ggplot2)
+library(plotly)
 source('lib.R')
 
 # much of this code is from this blog:
@@ -93,7 +94,7 @@ ui <- fluidPage(
     
     column(8,
       tabsetPanel(type = "tabs",
-        tabPanel("Plots", plotOutput('scoresPlot', dblclick = "plot_dbclick"), plotOutput('cardsPlot') ),
+        tabPanel("Plots", plotOutput('scoresPlot', dblclick = "plot_dbclick"), plotlyOutput('cardsPlotly') ),
         tabPanel("Table", DT::dataTableOutput("responses"))
         
       )
@@ -196,22 +197,21 @@ server <- function(input, output, session) {
 
   })
   
-  # display plot
-  output$cardsPlot <- renderPlot({
-    #update after submit is clicked
-    input$submit
-    #update after delete is clicked
-    input$delete
+  output$cardsPlotly <- renderPlotly({
     df = cardsPerGame()
-    ggplot(df, aes(x=Team, y = cpg)) + 
-      geom_col(colour='black', fill='yellow') +
-      xlab("") +
-      ylab("CardsPerGame") +
-      ggtitle("Most Cards/Game") +
-      theme_bw() +
-      theme(axis.text = element_text(size=14), axis.title = element_text(size=15), title = element_text(size=15, face='bold'))
+    fig <- plot_ly(df,
+      x = ~Team,
+      y = ~cpg,
+      type = "bar",
+      marker = list(color = 'yellow',
+                    line = list(color = 'rgb(8,48,107)', width = 1.5))
+    )
+    fig %>% layout(
+      yaxis = list(title = "Cards per Game")
+    )
+
   })
-  
+
   # display table
   output$responses <- DT::renderDataTable({
     #update after submit is clicked
