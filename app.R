@@ -147,6 +147,18 @@ server <- function(input, output, session) {
     isolate(plot_click$trigger <- plot_click$trigger + 1)
   })
   
+  output$scoresPlotly <- renderPlotly({
+    #update after submit is clicked
+    input$submit
+    #update after delete is clicked
+    input$delete
+    
+    ts <- topScoringTeam()
+    tc <- topConcedingTeam()
+    maxScore = max(tc$MostGoals, ts$MostGoals)
+    df = merge(ts,tc, by = 'Team', suffixes = c('.s','.c'))
+  })
+  
   # display plot
   output$scoresPlot <- renderPlot({
     #update after submit is clicked
