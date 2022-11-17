@@ -6,256 +6,74 @@ library(shiny)
 library(shinyjs)
 library(DBI)
 library(ggplot2)
+library(plotly)
+source('lib.R')
 
 # much of this code is from this blog:
 # https://ipub.com/shiny-crud-app/
 
-# load database
-LoadDb <- function() {
-  # for the time being create an in-memory db
-  # and load with empty df
-  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
-  df <- data.frame(id=integer(0), 
-                   team1=character(''), 
-                   team2=character(''), 
-                   score1=integer(0), 
-                   score2=integer(0),
-                   cards1=integer(0),
-                   cards2=integer(0))
-  dbWriteTable(con, "match", df, overwrite=TRUE)
-  dbDisconnect(con)
-
-}
 
 teams = c("Argentina" = "ARG",
           "Australia" = "AUS",
+          "Austia" = "AUT",
           "Belgium" = "BEL",
           "Brazil" = "BRA",
+          "Cameroon" = "CAM",
+          "Canada" = "CAN",
+          "Chile" = "CHL",
+          "China" = "CHN",
           "Colombia" = "COL",
           "Costa Rica" = "CRC",
           "Croatia" = "CRO",
+          "Czech Republic" = "CZE",
           "Denmark" = "DEN",
           "Egypt" = "EGY",
           "England" = "ENG",
+          "Finland" = "FIN",
           "France" = "FRA",
           "Germany" = "GER",
+          "Hungary" = "MGY",
           "Iceland" = "ISL",
           "Iran" = "IRN",
+          "Italy" = "ITA",
+          "Jamaica" = "JAM",
           "Japan" = "JPN",
           "Mexico" = "MEX",
           "Morocco" = "MAR",
+          "Netherlands" = "NED",
+          "New Zealand" = "NZL",
           "Nigeria" = "NGA",
+          "North Macedonia" = "MKD",
+          "Norway" = "NOR",
           "Panama" = "PAN",
           "Peru" = "PER",
           "Poland" = "POL",
           "Portugal" = "POR",
           "Russia" = "RUS",
           "Saudi Arabia" = "KSA",
+          "Scotland" = "SCO",
           "Senegal" = "SEN",
           "Serbia" = "SRB",
+          "Slovakia" = "SLO",
+          "South Africa" = "SAF",
           "South Korea" = "KOR",
           "Spain" = "ESP",
           "Sweden" = "SWE",
           "Switzerland" = "SUI",
+          "Thailand" = "TAI",
           "Tunisia" = "TUN",
-          "Uruguay" = "URU")
+          "Turkey" = "TUR",
+          "Ukraine" = "UKR",
+          "Uruguay" = "URU",
+          "USA" = "USA",
+          "Wales" = "WAL")
 
-# Get table metadata. For now, just the fields
-# Further development: also define field types
-# and create inputs generically
-GetTableMetadata <- function() {
-  fields <- c(id = "Id", 
-              team1 = "Home Team", 
-              team2 = "Away Team", 
-              score1 = "Home Score",
-              score2 = "Away Score",
-              cards1 = "Home Cards",
-              cards2 = "Away Cards")
-  
-  result <- list(fields = fields)
-  return (result)
-}
-
-# Find the next ID of a new record
-GetNextId <- function() {
-  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
-  if (length(dbListTables(con)) == 0) {
-    dbDisconnect(con)
-    return(1)
-  } else {
-    maxid = unname(dbGetQuery(con, "SELECT max(id) from match"))
-    dbDisconnect(con)
-    if (is.na(maxid)) {
-      return(1)
-    } else {
-      return(unlist(maxid) + 1)
-    }
-  }
-}
-
-#C - create
-CreateData <- function(data) {
-  data <- CastData(data)
-  data["id"] <- GetNextId()
-
-  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
-  dbWriteTable(con, "match", data, append=TRUE)
-  dbDisconnect(con)
-}
-
-#R - read
-ReadData <- function() {
-  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
-  if (length(dbListTables(con)) == 0) {
-    dbDisconnect(con)
-    LoadDb()
-  } else {
-    res = dbReadTable(con, 'match')
-    dbDisconnect(con)
-    if (nrow(res)) {
-      rownames(res) <- unlist(res['id'])
-      return(res[-1])
-    }
-  }
-}
-
-
-#U - update
-UpdateData <- function(data) {
-  data <- CastData(data)
-  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
-  dbBegin(con)
-  # first delete the entry to update
-  rows = dbExecute(con,sprintf("DELETE FROM match where id = %s",unname(data["id"])))
-  if (rows == 1) {
-    # then, write a new entry with the updated data
-    dbWriteTable(con, "match", data, append=TRUE)
-    dbCommit(con)
-  } else {
-    # rollback if there's a problem
-    dbRollback(con)
-  }
-  dbDisconnect(con)
-}
-
-#D - delete
-DeleteData <- function(data) {
-  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
-  dbExecute(con, sprintf("DELETE FROM match WHERE id = %s", unname(data["id"])))
-  dbDisconnect(con)
-}
-
-
-
-# Cast from Inputs to a one-row data.frame
-CastData <- function(data) {
-  datar <- data.frame(id = as.integer(data["id"]),
-                      team1 = data["team1"], 
-                      team2 = data["team2"],
-                      score1 = as.integer(data["score1"]),
-                      score2 = as.integer(data["score2"]),
-                      cards1 = as.integer(data["cards1"]),
-                      cards2 = as.integer(data["cards2"]),
-                      stringsAsFactors = FALSE)
-  
-  rownames(datar) <- data["id"]
-  return (datar)
-}
-
-# Return an empty, new record
-CreateDefaultRecord <- function() {
-  mydefault <- CastData(list(id = "0", 
-                             team1 = "ARG", 
-                             team2 = "AUS", 
-                             score1 = "0", 
-                             score2 = "0",
-                             cards1 = "0",
-                             cards2 = "0"))
-  return (mydefault)
-}
-
-# Fill the input fields with the values of the selected record in the table
-UpdateInputs <- function(data, session) {
-  updateTextInput(session, "id", value = unname(rownames(data)))
-  updateTextInput(session, "team1", value = unname(data["team1"]))
-  updateTextInput(session, "team2", value = unname(data["team2"]))
-  updateSliderInput(session, "score1", value = as.integer(data["score1"]))
-  updateSliderInput(session, "score2", value = as.integer(data["score2"]))
-  updateSliderInput(session, "cards1", value = as.integer(data["cards1"]))
-  updateSliderInput(session, "cards2", value = as.integer(data["cards2"]))
-}
-
-# scoring functions
-topScoringTeam <- function() {
-  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
-  res = dbGetQuery(con, "SELECT team1 as Team, sum(score1) as MostGoals FROM (
-                   SELECT m1.team1, m1.team2, m1.score1, m1.score2 
-                   FROM match m1 
-                   UNION select m2.team2, m2.team1, m2.score2, m2.score1 
-                   FROM match m2
-  ) AS foo 
-                   GROUP BY team1 
-                   ")
-  dbDisconnect(con)
-  return(res)
-}
-
-# scoring functions
-topConcedingTeam <- function() {
-  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
-  res = dbGetQuery(con, "SELECT team1 as Team, sum(score2) as MostGoals FROM (
-                   SELECT m1.team1, m1.team2, m1.score1, m1.score2 
-                   FROM match m1 
-                   UNION select m2.team2, m2.team1, m2.score2, m2.score1 
-                   FROM match m2
-  ) AS foo 
-                   GROUP BY team1 
-                   ")
-  dbDisconnect(con)
-  return(res)
-}
-
-# find teams with most cards
-mostCards <- function() {
-  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
-  res = dbGetQuery(con, "SELECT team1 as Team, sum(cards1) as MostCards FROM (
-                   SELECT m1.team1, m1.team2, m1.cards1, m1.cards2 
-                   FROM match m1 
-                   UNION select m2.team2, m2.team1, m2.cards2, m2.cards1 
-                   FROM match m2
-  ) AS foo 
-                   GROUP BY team1")
-  dbDisconnect(con)
-  return(res)
-}
-
-# Get the games played per team
-gamesPlayed <- function() {
-  con <- dbConnect(RSQLite::SQLite(), "sqlite.db")
-  res = dbGetQuery(con, "select team1 as team, count(*) as games from (SELECT m1.team1, m1.team2 from match m1 union select m2.team2, m2.team1 from match m2) as foo group by team1")
-  dbDisconnect(con)
-  return(res)
-}
-
-# Calculate the number of cards per game
-cardsPerGame <- function() {
-  gp = gamesPlayed()
-  mc = mostCards()
-  # merge games played with the cards collected
-  df = data.frame(mc, Games = gp$games, cpg = mc$MostCards/gp$games)
-  # order by cards per game
-  df = df[order(df$cpg, decreasing = TRUE),]
-  # keep top five
-  df =  df[1:6,]
-  df$Team <- factor(df$Team, levels=df$Team)
-  return(df)
-}
 
 ui <- fluidPage(
   #use shiny js to disable the ID field
   shinyjs::useShinyjs(),
   
-  titlePanel("LRCFS World Cup Sweepstake"),
+  titlePanel("Euro 2020 Sweepstake"),
   
   fluidRow(
     column(3,
@@ -276,7 +94,7 @@ ui <- fluidPage(
     
     column(8,
       tabsetPanel(type = "tabs",
-        tabPanel("Plots", plotOutput('scoresPlot', click = "plot_click"), plotOutput('cardsPlot') ),
+        tabPanel("Plots", plotOutput('scoresPlot', dblclick = "plot_dbclick"), plotlyOutput('cardsPlotly') ),
         tabPanel("Table", DT::dataTableOutput("responses"))
         
       )
@@ -322,6 +140,25 @@ server <- function(input, output, session) {
     
   })
   
+  # keep track of double-click event
+  plot_click <- reactiveValues(trigger = 0)
+  observe({
+    req(input$plot_dbclick)
+    isolate(plot_click$trigger <- plot_click$trigger + 1)
+  })
+  
+  output$scoresPlotly <- renderPlotly({
+    #update after submit is clicked
+    input$submit
+    #update after delete is clicked
+    input$delete
+    
+    ts <- topScoringTeam()
+    tc <- topConcedingTeam()
+    maxScore = max(tc$MostGoals, ts$MostGoals)
+    df = merge(ts,tc, by = 'Team', suffixes = c('.s','.c'))
+  })
+  
   # display plot
   output$scoresPlot <- renderPlot({
     #update after submit is clicked
@@ -334,56 +171,59 @@ server <- function(input, output, session) {
     tc$Team <- factor(tc$Team, levels=tc$Team)
     maxScore = max(tc$MostGoals, ts$MostGoals)
     if (maxScore %% 2 == 1) {
-      maxScore = maxScore -1
+      #maxScore = maxScore -1
     }
     tc$MostGoals <- tc$MostGoals * -1
     
-    if (!is.null(input$plot_click)) {
+    if (plot_click$trigger %% 2 == 0) {
       tc = tc[order(ts$MostGoals, decreasing = TRUE),]
       ts = ts[order(ts$MostGoals, decreasing = TRUE),]
     }
     
+    # setting up a a pair of lined-up bar plots
+    # top plot
     par(mfrow=c(2,1))
     par(mai=c(1,0.8,0,0))
     par(mgp=c(1.5,0.5,0.5))
     par(mar=c(0,3,3,0))
     # need to plot twice in order to have lines below bars
     barplot(rep(NA, length(ts$MostGoals)), ylim=c(0,maxScore), axes = FALSE)
-    abline(h=seq(0,maxScore,2), col='lightgray')
-    barplot(ts$MostGoals, col="darkgreen", ylab='Scored', las=1, tck=-0.02, cex.names = 0.5, cex.axis = 0.8, ylim=c(0,maxScore), add = TRUE)
+    abline(h=seq(0,10,2), col='lightgray')
+    barplot(ts$MostGoals, col="darkgreen", add = TRUE, yaxt = 'n')
+    # ensure axis labels are integers
+    axis(2, at = 0:maxScore, las=1, tck=-0.02, cex.lab = 0.5, cex.axis = 0.8)
+    # bottom plot
     par(mai=c(1,0.8,0,0))
     par(mar=c(5,3,0,0))
     barplot(rep(NA, length(tc$MostGoals)), ylim=c(-maxScore,0), axes = FALSE)
-    abline(h=seq(-maxScore,0,2), col='lightgray')
+    abline(h=seq(-10,0,2), col='lightgray')
     barplot(tc$MostGoals, 
             names.arg = tc$Team, 
             col="red", 
             ylab='Conceeded', 
-            las=1, 
-            tck=-0.02, 
-            cex.names = 0.65, 
-            cex.axis = 0.8,
-            add = TRUE)
+            add = TRUE,
+            yaxt = 'n')
+    axis(2, at = 0:-maxScore, las=1, tck=-0.02, cex.names = 0.5, cex.axis = 0.8, )
+    
 
 
   })
   
-  # display plot
-  output$cardsPlot <- renderPlot({
-    #update after submit is clicked
-    input$submit
-    #update after delete is clicked
-    input$delete
+  output$cardsPlotly <- renderPlotly({
     df = cardsPerGame()
-    ggplot(df, aes(x=Team, y = cpg)) + 
-      geom_col(colour='black', fill='yellow') +
-      xlab("") +
-      ylab("CardsPerGame") +
-      ggtitle("Most Cards/Game") +
-      theme_bw() +
-      theme(axis.text = element_text(size=14), axis.title = element_text(size=15), title = element_text(size=15, face='bold'))
+    fig <- plot_ly(df,
+      x = ~Team,
+      y = ~cpg,
+      type = "bar",
+      marker = list(color = 'yellow',
+                    line = list(color = 'rgb(8,48,107)', width = 1.5))
+    )
+    fig %>% layout(
+      yaxis = list(title = "Cards per Game")
+    )
+
   })
-  
+
   # display table
   output$responses <- DT::renderDataTable({
     #update after submit is clicked
