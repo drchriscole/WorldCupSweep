@@ -1,5 +1,5 @@
 getCon <- function() {
-  con <- dbConnect(RSQLite::SQLite(), "Euros2020_sqlite.db")
+  con <- dbConnect(RSQLite::SQLite(), "FIFA2022_sqlite.db")
   return(con)
 }
 
@@ -20,38 +20,40 @@ LoadDb <- function() {
   
 }
 
+
 teams = c("Argentina" = "ARG",
           "Australia" = "AUS",
           "Belgium" = "BEL",
           "Brazil" = "BRA",
-          "Colombia" = "COL",
+          "Cameroon" = "CMR",
+          "Canada" = "CAN",
           "Costa Rica" = "CRC",
           "Croatia" = "CRO",
           "Denmark" = "DEN",
-          "Egypt" = "EGY",
+          "Ecuador" = "ECU",
           "England" = "ENG",
           "France" = "FRA",
           "Germany" = "GER",
-          "Iceland" = "ISL",
+          "Ghana" = "GHA",
           "Iran" = "IRN",
           "Japan" = "JPN",
+          "South Korea" = "KOR",
           "Mexico" = "MEX",
           "Morocco" = "MAR",
-          "Nigeria" = "NGA",
-          "Panama" = "PAN",
-          "Peru" = "PER",
+          "Netherlands" = "NED",
           "Poland" = "POL",
           "Portugal" = "POR",
-          "Russia" = "RUS",
+          "Qatar" = "QAT",
           "Saudi Arabia" = "KSA",
           "Senegal" = "SEN",
           "Serbia" = "SRB",
-          "South Korea" = "KOR",
           "Spain" = "ESP",
-          "Sweden" = "SWE",
           "Switzerland" = "SUI",
           "Tunisia" = "TUN",
-          "Uruguay" = "URU")
+          "Uruguay" = "URU",
+          "USA" = "USA",
+          "Wales" = "WAL")
+
 
 # Get table metadata. For now, just the fields
 # Further development: also define field types
