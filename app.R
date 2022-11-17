@@ -148,7 +148,7 @@ server <- function(input, output, session) {
             ylab='Conceeded', 
             add = TRUE,
             yaxt = 'n')
-    axis(2, at = 0:-maxScore, las=1, tck=-0.02, cex.names = 0.5, cex.axis = 0.8, )
+    axis(2, at = 0:-maxScore, las=1, tck=-0.02, cex.lab = 0.5, cex.axis = 0.8, )
     
 
 
