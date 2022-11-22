@@ -24,6 +24,7 @@ ui <- fluidPage(
   fluidRow(
     column(3,
       #input fields
+      shinyjs::disabled(textInput("id", "Id", "0")),
       selectInput("team1", "Home Team", teams),
       selectInput("team2", "Away Team", teams, selected = "AUS"),
       sliderInput("score1", "Home Score", 0, 10, 0, ticks = TRUE),
