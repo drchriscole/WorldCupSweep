@@ -4,6 +4,7 @@
 
 library(shiny)
 library(shinyjs)
+library(shinydashboard)
 library(DBI)
 library(ggplot2)
 library(plotly)
@@ -23,7 +24,6 @@ ui <- fluidPage(
   fluidRow(
     column(3,
       #input fields
-      shinyjs::disabled(textInput("id", "Id", "0")),
       selectInput("team1", "Home Team", teams),
       selectInput("team2", "Away Team", teams, selected = "AUS"),
       sliderInput("score1", "Home Score", 0, 10, 0, ticks = TRUE),
@@ -39,7 +39,14 @@ ui <- fluidPage(
     
     column(8,
       tabsetPanel(type = "tabs",
-        tabPanel("Plots", plotOutput('scoresPlot', dblclick = "plot_dbclick"), plotlyOutput('cardsPlotly') ),
+        tabPanel("Plots", 
+                   box(title = "Goals Scored/Conceded", width = NULL,
+                       plotOutput('scoresPlot', dblclick = "plot_dbclick")
+                   ),
+                   box(title = "Least Disciplined Teams", width = NULL,
+                       plotlyOutput('cardsPlotly') 
+                   )
+                 ),
         tabPanel("Table", DT::dataTableOutput("responses"))
         
       )
