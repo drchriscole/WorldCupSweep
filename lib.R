@@ -161,7 +161,7 @@ CastData <- function(data) {
 CreateDefaultRecord <- function() {
   mydefault <- CastData(list(id = "0", 
                              team1 = "ENG", 
-                             team2 = "SCO", 
+                             team2 = "WAL", 
                              score1 = "0", 
                              score2 = "0",
                              cards1 = "0",
