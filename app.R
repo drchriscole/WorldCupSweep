@@ -8,6 +8,7 @@ library(shinydashboard)
 library(DBI)
 library(ggplot2)
 library(plotly)
+library(dplyr)
 source('lib.R')
 
 # much of this code is from this blog:
@@ -118,47 +119,47 @@ server <- function(input, output, session) {
     input$submit
     #update after delete is clicked
     input$delete
-    ts <- topScoringTeam()
-    ts$Team <- factor(ts$Team, levels=ts$Team)
-    tc <- topConcedingTeam()
-    tc$Team <- factor(tc$Team, levels=tc$Team)
-    maxScore = max(tc$MostGoals, ts$MostGoals)
-    if (maxScore %% 2 == 1) {
-      #maxScore = maxScore -1
-    }
-    tc$MostGoals <- tc$MostGoals * -1
-    
-    if (plot_click$trigger %% 2 == 0) {
-      tc = tc[order(ts$MostGoals, decreasing = TRUE),]
-      ts = ts[order(ts$MostGoals, decreasing = TRUE),]
-    }
-    
-    # setting up a a pair of lined-up bar plots
-    # top plot
-    par(mfrow=c(2,1))
-    par(mai=c(1,0.8,0,0))
-    par(mgp=c(1.5,0.5,0.5))
-    par(mar=c(0,3,3,0))
-    # need to plot twice in order to have lines below bars
-    barplot(rep(NA, length(ts$MostGoals)), ylim=c(0,maxScore), axes = FALSE)
-    abline(h=seq(0,10,2), col='lightgray')
-    barplot(ts$MostGoals, col="darkgreen", add = TRUE, yaxt = 'n')
-    # ensure axis labels are integers
-    axis(2, at = 0:maxScore, las=1, tck=-0.02, cex.lab = 0.5, cex.axis = 0.8)
-    # bottom plot
-    par(mai=c(1,0.8,0,0))
-    par(mar=c(5,3,0,0))
-    barplot(rep(NA, length(tc$MostGoals)), ylim=c(-maxScore,0), axes = FALSE)
-    abline(h=seq(-10,0,2), col='lightgray')
-    barplot(tc$MostGoals, 
-            names.arg = tc$Team, 
-            col="red", 
-            ylab='Conceeded', 
-            add = TRUE,
-            yaxt = 'n')
-    axis(2, at = 0:-maxScore, las=1, tck=-0.02, cex.lab = 0.5, cex.axis = 0.8, )
-    
 
+    # get scoring data and merge
+    ts <- topScoringTeam()
+    ts$Type = 'For'
+    tc <- topConcedingTeam()
+    tc$Type = 'Against'
+    tc$MostGoals = tc$MostGoals * -1
+    df = rbind(ts, tc)
+    
+    max.score = max(abs(df$MostGoals))
+    
+    # this looks more complicated than it should be, but
+    # find the team order based on most scored or conceded goals
+    team.order = df %>% 
+      group_by(Team) %>% 
+      slice_max(abs(MostGoals), with_ties = FALSE) %>% 
+      arrange(desc(MostGoals)) %>%
+      select(Team) %>%
+      pull()
+    
+    # change sort order if double-clicked
+    if (plot_click$trigger %% 2 == 0) {
+      df$Team = factor(df$Team, levels = team.order)
+    }
+    
+    ggplot(df, aes(x = Team, y = MostGoals, fill = Type)) + 
+      labs(x = 'Team',
+           y = 'Goals Scored (For/Against)',
+           fill = '') +
+      ylim(c(-1*max.score, max.score)) +
+      geom_col() + 
+      # add score to bar and remove zeros
+      # geom_text(aes(label = ifelse(abs(MostGoals) > 0, MostGoals, NA )),
+      #           colour = 'white', 
+      #           fontface = 'bold',
+      #           nudge_y = ifelse(df$MostGoals < 0, 0.3, -0.3)) +
+      scale_fill_manual(values = c('red','darkgreen')) +
+      theme_minimal() +
+      theme(legend.position = 'top')
+    
+    
 
   })
   
