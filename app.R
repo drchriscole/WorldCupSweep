@@ -24,34 +24,46 @@ ui <- fluidPage(
   
   fluidRow(
     column(3,
-      #input fields
-      shinyjs::disabled(textInput("id", "Id", "0")),
-      selectInput("team1", "Home Team", teams),
-      selectInput("team2", "Away Team", teams, selected = "AUS"),
-      sliderInput("score1", "Home Score", 0, 10, 0, ticks = TRUE),
-      sliderInput("score2", "Away Score", 0, 10, 0, ticks = TRUE),
-      sliderInput("cards1", "Home Cards", 0, 10, 0, ticks = TRUE),
-      sliderInput("cards2", "Away Cards", 0, 10, 0, ticks = TRUE),
-      
-      #action buttons
-      actionButton("submit", "Submit"),
-      actionButton("new", "New"),
-      actionButton("delete", "Delete")
+           #input fields
+           shinyjs::disabled(textInput("id", "Id", "0")),
+           selectInput("team1", "Home Team", teams),
+           selectInput("team2", "Away Team", teams, selected = "AUS"),
+           sliderInput("score1", "Home Score", 0, 10, 0, ticks = TRUE),
+           sliderInput("score2", "Away Score", 0, 10, 0, ticks = TRUE),
+           sliderInput("cards1", "Home Cards", 0, 10, 0, ticks = TRUE),
+           sliderInput("cards2", "Away Cards", 0, 10, 0, ticks = TRUE),
+           
+           #action buttons
+           actionButton("submit", "Submit"),
+           actionButton("new", "New"),
+           actionButton("delete", "Delete")
     ),
     
-    column(8,
-      tabsetPanel(type = "tabs",
-        tabPanel("Plots", 
-                   box(title = "Goals Scored/Conceded", width = NULL,
-                       plotOutput('scoresPlot', dblclick = "plot_dbclick")
-                   ),
-                   box(title = "Least Disciplined Teams", width = NULL,
-                       plotlyOutput('cardsPlotly') 
-                   )
-                 ),
-        tabPanel("Table", DT::dataTableOutput("responses"))
-        
-      )
+    column(9,
+           tabsetPanel(type = "tabs",
+                       tabPanel("Plots", 
+                                fluidRow(
+                                  infoBox(title = 'Best Scoring Team', 
+                                          value = 'England',
+                                          icon = icon('list'),
+                                          color = 'aqua'
+                                          
+                                  )
+                                ),
+                                fluidRow(
+                                  box(title = "Goals Scored/Conceded", width = NULL,
+                                      plotOutput('scoresPlot', dblclick = "plot_dbclick")
+                                  )
+                                ),
+                                fluidRow(
+                                  box(title = "Least Disciplined Teams", width = NULL,
+                                      plotlyOutput('cardsPlotly') 
+                                  )
+                                )
+                       ),
+                       tabPanel("Table", DT::dataTableOutput("responses"))
+                       
+           )
     )
   )
 )
@@ -119,7 +131,7 @@ server <- function(input, output, session) {
     input$submit
     #update after delete is clicked
     input$delete
-
+    
     # get scoring data and merge
     ts <- topScoringTeam()
     ts$Type = 'For'
@@ -160,24 +172,24 @@ server <- function(input, output, session) {
       theme(legend.position = 'top')
     
     
-
+    
   })
   
   output$cardsPlotly <- renderPlotly({
     df = cardsPerGame()
     fig <- plot_ly(df,
-      x = ~Team,
-      y = ~cpg,
-      type = "bar",
-      marker = list(color = 'yellow',
-                    line = list(color = 'rgb(8,48,107)', width = 1.5))
+                   x = ~Team,
+                   y = ~cpg,
+                   type = "bar",
+                   marker = list(color = 'yellow',
+                                 line = list(color = 'rgb(8,48,107)', width = 1.5))
     )
     fig %>% layout(
       yaxis = list(title = "Cards per Game")
     )
-
+    
   })
-
+  
   # display table
   output$responses <- DT::renderDataTable({
     #update after submit is clicked
