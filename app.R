@@ -16,56 +16,53 @@ source('lib.R')
 
 
 
-ui <- fluidPage(
-  #use shiny js to disable the ID field
-  shinyjs::useShinyjs(),
-  
-  titlePanel("FIFA 2022 Sweepstake"),
-  
-  fluidRow(
-    column(3,
-           #input fields
-           shinyjs::disabled(textInput("id", "Id", "0")),
-           selectInput("team1", "Home Team", teams),
-           selectInput("team2", "Away Team", teams, selected = "AUS"),
-           sliderInput("score1", "Home Score", 0, 10, 0, ticks = TRUE),
-           sliderInput("score2", "Away Score", 0, 10, 0, ticks = TRUE),
-           sliderInput("cards1", "Home Cards", 0, 10, 0, ticks = TRUE),
-           sliderInput("cards2", "Away Cards", 0, 10, 0, ticks = TRUE),
-           
-           #action buttons
-           actionButton("submit", "Submit"),
-           actionButton("new", "New"),
-           actionButton("delete", "Delete")
+ui <- dashboardPage(
+  dashboardHeader(title = "FIFA 2022 Sweepstake"), 
+  dashboardSidebar(collapsed = TRUE,
+       #use shiny js to disable the ID field
+       shinyjs::useShinyjs(),
+        
+       #input fields
+       shinyjs::disabled(textInput("id", "Id", "0")),
+       selectInput("team1", "Home Team", teams),
+       selectInput("team2", "Away Team", teams, selected = "AUS"),
+       sliderInput("score1", "Home Score", 0, 10, 0, ticks = TRUE),
+       sliderInput("score2", "Away Score", 0, 10, 0, ticks = TRUE),
+       sliderInput("cards1", "Home Cards", 0, 10, 0, ticks = TRUE),
+       sliderInput("cards2", "Away Cards", 0, 10, 0, ticks = TRUE),
+       
+       #action buttons
+       actionButton("submit", "Submit"),
+       actionButton("new", "New"),
+       actionButton("delete", "Delete")
     ),
     
-    column(9,
-           tabsetPanel(type = "tabs",
-                       tabPanel("Plots", 
-                                fluidRow(
-                                  infoBox(title = 'Best Scoring Team', 
-                                          value = 'England',
-                                          icon = icon('list'),
-                                          color = 'aqua'
-                                          
-                                  )
-                                ),
-                                fluidRow(
-                                  box(title = "Goals Scored/Conceded", width = NULL,
-                                      plotOutput('scoresPlot', dblclick = "plot_dbclick")
-                                  )
-                                ),
-                                fluidRow(
-                                  box(title = "Least Disciplined Teams", width = NULL,
-                                      plotlyOutput('cardsPlotly') 
-                                  )
-                                )
-                       ),
-                       tabPanel("Table", DT::dataTableOutput("responses"))
-                       
+    dashboardBody(
+       tabsetPanel(type = "tabs",
+           tabPanel("Plots", 
+              fluidRow(
+                infoBoxOutput("topScoreTeam"),
+                infoBoxOutput("topConcedingTeam"),
+                infoBoxOutput("leastDiscTeam")
+              ),
+              fluidRow(
+                box(title = "Goals Scored/Conceded", width = 12, 
+                    solidHeader = TRUE, background = 'light-blue',
+                    plotOutput('scoresPlot', dblclick = "plot_dbclick")
+                )
+              ),
+              fluidRow(
+                box(title = "Least Disciplined Teams", width = 12, 
+                    solidHeader = TRUE, background = 'light-blue',
+                    plotlyOutput('cardsPlotly') 
+                )
+              )
+           ),
+           tabPanel("Table", 
+              DT::dataTableOutput("responses")
            )
+       )
     )
-  )
 )
 
 
@@ -112,6 +109,42 @@ server <- function(input, output, session) {
     req(input$plot_dbclick)
     isolate(plot_click$trigger <- plot_click$trigger + 1)
   })
+  
+  output$topScoreTeam <- renderInfoBox({
+    ts <- topScoringTeam()
+    top = ts[order(ts$MostGoals, decreasing = TRUE), 1]
+    team = top[1]
+    
+    infoBox(title = 'Best Scoring Team', 
+            value = names(teams)[teams == team],
+            icon = icon('futbol'),
+            color = 'olive'
+    )
+  })
+
+  output$topConcedingTeam <- renderInfoBox({
+    tc <- topConcedingTeam()
+    top = tc[order(tc$MostGoals, decreasing = TRUE), 1]
+    team = top[1]
+    
+    infoBox(title = 'Most Conceding Team', 
+            value = names(teams)[teams == team],
+            icon = icon('futbol'),
+            color = 'red'
+    )
+  })
+  
+  output$leastDiscTeam <- renderInfoBox({
+    df = cardsPerGame()
+    top = df[order(df$cpg, decreasing = TRUE), 1]
+    team = top[1]
+    infoBox(title = 'Least Disciplined Team', 
+            value = names(teams)[teams == team],
+            icon = icon('exclamation'),
+            color = 'yellow'
+    )
+  })
+  
   
   output$scoresPlotly <- renderPlotly({
     #update after submit is clicked
