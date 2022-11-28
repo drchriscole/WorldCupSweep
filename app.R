@@ -150,11 +150,11 @@ server <- function(input, output, session) {
            fill = '') +
       ylim(c(-1*max.score, max.score)) +
       geom_col() + 
-      # add score to bar and remove zeros
-      # geom_text(aes(label = ifelse(abs(MostGoals) > 0, MostGoals, NA )),
-      #           colour = 'white', 
-      #           fontface = 'bold',
-      #           nudge_y = ifelse(df$MostGoals < 0, 0.3, -0.3)) +
+      #add score to bar and remove zeros
+      geom_text(aes(label = ifelse(abs(MostGoals) > 0, MostGoals, NA )),
+                colour = 'white',
+                fontface = 'bold',
+                nudge_y = ifelse(df$MostGoals < 0, 0.4, -0.4)) +
       scale_fill_manual(values = c('red','darkgreen')) +
       theme_minimal() +
       theme(legend.position = 'top')
