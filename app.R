@@ -112,11 +112,13 @@ server <- function(input, output, session) {
   
   output$topScoreTeam <- renderInfoBox({
     ts <- topScoringTeam()
-    top = ts[order(ts$MostGoals, decreasing = TRUE), 1]
-    team = top[1]
+    # get teams with most goals scored
+    top = ts %>% filter(MostGoals == max(ts$MostGoals))
+    # retreive full name of top teams and convert to comma-separated string
+    topTeamStr = paste0(names(teams)[teams == top$Team], collapse = ', ')
     
     infoBox(title = 'Best Scoring Team', 
-            value = names(teams)[teams == team],
+            value = topTeamStr,
             icon = icon('futbol'),
             color = 'olive'
     )
@@ -124,11 +126,13 @@ server <- function(input, output, session) {
 
   output$topConcedingTeam <- renderInfoBox({
     tc <- topConcedingTeam()
-    top = tc[order(tc$MostGoals, decreasing = TRUE), 1]
-    team = top[1]
+    # get teams with most goals conceded
+    top = tc %>% filter(MostGoals == max(tc$MostGoals))
+    # retreive full name of top teams and convert to comma-separated string
+    topTeamStr = paste0(names(teams)[teams == top$Team], collapse = ', ')
     
     infoBox(title = 'Most Conceding Team', 
-            value = names(teams)[teams == team],
+            value = topTeamStr,
             icon = icon('futbol'),
             color = 'red'
     )
