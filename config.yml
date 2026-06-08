@@ -1,0 +1,4 @@
+
+default:
+  title: "FIFA 2026 Sweepstake"
+  database: "FIFA2026_sqlite.db"
