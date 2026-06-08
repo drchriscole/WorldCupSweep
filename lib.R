@@ -1,5 +1,8 @@
+# get values from config.yaml
+config <- config::get()
+
 getCon <- function() {
-  con <- dbConnect(RSQLite::SQLite(), "FIFA2022_sqlite.db")
+  con <- dbConnect(RSQLite::SQLite(), config$database)
   return(con)
 }
 
@@ -21,38 +24,56 @@ LoadDb <- function() {
 }
 
 
-teams = c("Argentina" = "ARG",
+teams = c(
+          "Algeria" = "ALG",
+          "Argentina" = "ARG",
           "Australia" = "AUS",
+          "Austria" = "AUT",
           "Belgium" = "BEL",
+          "Bosnia & Herzegovina" = "BIH",
           "Brazil" = "BRA",
-          "Cameroon" = "CMR",
           "Canada" = "CAN",
-          "Costa Rica" = "CRC",
+          "Cape Verde" = "CPV",
+          "Colombia" = "COL",
           "Croatia" = "CRO",
-          "Denmark" = "DEN",
+          "Curaçao" = "CUW",
+          "Czech Republic" = "CZE",
+          "DR Congo" = "COD",
           "Ecuador" = "ECU",
+          "Egypt" = "EGY",
           "England" = "ENG",
           "France" = "FRA",
           "Germany" = "GER",
           "Ghana" = "GHA",
+          "Haiti" = "HAI",
           "Iran" = "IRN",
+          "Iraq" = "IRQ",
+          "Ivory Coast" = "CIV",
           "Japan" = "JPN",
-          "South Korea" = "KOR",
+          "Jordan" = "JOR",
           "Mexico" = "MEX",
           "Morocco" = "MAR",
           "Netherlands" = "NED",
-          "Poland" = "POL",
+          "New Zealand" = "NZL",
+          "Norway" = "NOR",
+          "Panama" = "PAN",
+          "Paraguay" = "PAR",
           "Portugal" = "POR",
           "Qatar" = "QAT",
           "Saudi Arabia" = "KSA",
+          "Scotland" = "SCO",
           "Senegal" = "SEN",
-          "Serbia" = "SRB",
+          "South Africa" = "RSA",
+          "South Korea" = "KOR",
           "Spain" = "ESP",
+          "Sweden" = "SWE",
           "Switzerland" = "SUI",
           "Tunisia" = "TUN",
+          "Turkey" = "TUR",
           "Uruguay" = "URU",
           "USA" = "USA",
-          "Wales" = "WAL")
+          "Uzbekistan" = "UZB"
+          )
 
 
 # Get table metadata. For now, just the fields

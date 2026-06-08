@@ -17,7 +17,7 @@ source('lib.R')
 
 
 ui <- dashboardPage(
-  dashboardHeader(title = "FIFA 2022 Sweepstake"), 
+  dashboardHeader(title = config$title), 
   dashboardSidebar(collapsed = TRUE,
        #use shiny js to disable the ID field
        shinyjs::useShinyjs(),
