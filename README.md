@@ -2,7 +2,11 @@
 
 A Shiny app for managing a Football World Cup (or similar) sweepstake.
 
-Simple winner-takes-all sweepstakes are boring. As soon as someone gets a crappy team out of the hat they instantly lose interest. A better way to do include everyone is to have secondary prizes for 'bad' perfomances: e.g. most goals conceded, most yellow cards collected. This keeps interest going into the second week and beyond for anyone who doesn't have Brasil/Spain/etc.
+Simple winner-takes-all sweepstakes are boring. As soon as someone gets a crappy
+team out of the hat they instantly lose interest. A better way to do include 
+everyone is to have secondary prizes for 'bad' perfomances: e.g. most goals 
+conceded, most yellow cards collected. This keeps interest going into the second
+week and beyond for anyone who doesn't have Brasil/Spain/etc.
 
 The problem is tracking that kind of information.
 
@@ -24,4 +28,21 @@ This is where this R Shiny app comes in. It helps in three ways:
 
 # How to run
 
-Clone the repository, open the 'app.R' script in Rstudio and hit the 'Run App' button.
+Clone the repository, open the `app.R` script in Rstudio and hit the 'Run App' 
+button.
+
+# How to setup a new sweepstake
+
+  1. Create new empty database (where 'new_database_file.db' can be any name)
+  
+    touch new_database_file.db
+    sqlite3 new_database_file.db < schema.sql
+
+  2. Update `config.yml` file with new database file name and title i.e.
+  
+    default:
+      title: "My new Sweepstake"
+      database: "new_database_file.db"
+
+  3. Load `app.R` in Rstudio and click "Run App"
+
